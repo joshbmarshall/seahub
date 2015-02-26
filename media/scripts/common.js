@@ -23,6 +23,7 @@ require.config({
     paths: {
         jquery: 'lib/jquery',
         'jquery.ui.widget': 'lib/jquery.ui.widget.1.11.1',
+        'jquery.ui.tabs': 'lib/jquery.ui.tabs',
         'tmpl': 'lib/tmpl.min',
         'jquery.iframe-transport': 'lib/jquery.iframe-transport.1.4',
         'jquery.fileupload': 'lib/jquery.fileupload.5.42.1',
@@ -32,6 +33,7 @@ require.config({
 
         simplemodal: 'lib/jquery.simplemodal.1.4.4.min',
         jstree: 'lib/jstree.1.0',
+        select2: 'lib/select2',
         underscore: 'lib/underscore',
         backbone: 'lib/backbone',
         text: 'lib/text'
@@ -75,6 +77,16 @@ define([
               case 'cancel_cp': return siteRoot + 'ajax/cancel_cp/';
               case 'get_shared_link': return '';
               case 'get_shared_upload_link': return '';
+
+              case 'delete_share_download_link': return siteRoot + 'share/ajax/link/remove/';
+              case 'delete_share_upload_link': return siteRoot + 'share/ajax/upload_link/remove/';
+              case 'get_user_contacts': return siteRoot + 'ajax/contacts/';
+              case 'get_user_groups': return siteRoot + 'ajax/groups/';
+              case 'get_share_download_link': return siteRoot + 'share/ajax/get-download-link/';
+              case 'get_share_upload_link': return siteRoot + 'share/ajax/get-upload-link/';
+              case 'send_share_link': return siteRoot + 'share/ajax/send-share-link/';
+              case 'private_share_dir': return siteRoot + 'share/ajax/private-share-dir/';
+              case 'private_share_file': return siteRoot + 'share/ajax/private-share-file/';
             }
         },
 
@@ -149,7 +161,7 @@ define([
 
                 /* only need a token for non-get requests */
                 if (method == 'create' || method == 'update' || method == 'delete') {
-                    // CSRF token value is in an embedded meta tag 
+                    // CSRF token value is in an embedded meta tag
                     // var csrfToken = $("meta[name='csrf_token']").attr('content');
                     var csrfToken = app.pageOptions.csrfToken;
 
@@ -161,8 +173,8 @@ define([
                 /* proxy the call to the old sync method */
                 return Backbone._sync(method, model, options);
             };
-        },        
-        
+        },
+
         prepareCSRFToken: function(xhr, settings) {
             function getCookie(name) {
                 var cookieValue = null;
@@ -186,34 +198,69 @@ define([
         },
 
         ajaxPost: function(params) {
-            var form = params.form,
-            post_url = params.post_url,
-            post_data = params.post_data,
-            after_op_success = params.after_op_success,
-            form_id = params.form_id;
-            var submit_btn = form.children('[type="submit"]');
+            var _this = this,
+                form = params.form,
+                form_id = params.form_id,
+                post_url = params.post_url,
+                post_data = params.post_data,
+                submit_btn = form.children('[type="submit"]'),
+                after_op_error,
+                after_op_success = params.after_op_success;
+
             this.disableButton(submit_btn);
-            $.ajax({
-                url: post_url,
-                type: 'POST',
-                dataType: 'json',
-                beforeSend: this.prepareCSRFToken,
-                data: post_data,
-                success: function(data) {
-                    if (data['success']) {
-                        after_op_success(data);
-                    }
-                },
-                error: function(xhr, textStatus, errorThrown) {
+
+            if (params.hasOwnProperty('after_op_error')) {
+                after_op_error = params.after_op_error;
+            } else {
+                after_op_error = function(xhr, textStatus, errorThrown) {
                     var err;
                     if (xhr.responseText) {
                         err = $.parseJSON(xhr.responseText).error;
                     } else {
                         err = getText("Failed. Please check the network.");
                     }
-                    this.feedback(err);
-                    this.enableButton(submit_btn);
+                    _this.feedback(err, 'error', _this.ERROR_TIMEOUT);
                 }
+            };
+
+            $.ajax({
+                url: post_url,
+                type: 'POST',
+                dataType: 'json',
+                beforeSend: this.prepareCSRFToken,
+                data: post_data,
+                success: function(data) { after_op_success(data); },
+                error: after_op_error
+            });
+        },
+
+        ajaxGet: function(params) {
+            var _this = this,
+                get_url = params.get_url,
+                data = params.data,
+                after_op_error,
+                after_op_success = params.after_op_success;
+
+            if (params.hasOwnProperty('after_op_error')) {
+                after_op_error = params.after_op_error;
+            } else {
+                after_op_error = function(xhr, textStatus, errorThrown) {
+                    var err;
+                    if (xhr.responseText) {
+                        err = $.parseJSON(xhr.responseText).error;
+                    } else {
+                        err = getText("Failed. Please check the network.");
+                    }
+                    _this.feedback(err, 'error', _this.ERROR_TIMEOUT);
+                }
+            };
+            $.ajax({
+                url: get_url,
+                cache: false,
+                dataType: 'json',
+                data: data,
+                success: function(data) {after_op_success(data);},
+                error: after_op_error
             });
         },
 
@@ -223,7 +270,7 @@ define([
                 .parentNode
                 .innerHTML;
         },
-        
+
         pathJoin: function(array) {
             var result = array[0];
             for (var i = 1; i < array.length; i++) {
@@ -234,6 +281,11 @@ define([
             }
             return result;
         },
+
+//        validateEmail: function(email) {
+//            var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+//            return re.test(email);
+//        },
 
        fileSizeFormat: function (bytes, precision) {
            var kilobyte = 1024;
