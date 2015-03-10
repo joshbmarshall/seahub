@@ -125,29 +125,31 @@ define([
             $(el).closest('.checkbox-label').next().toggleClass('hide');
         },
 
-        generateDownloadLink: function() {
-            var form = this.$('#generate-download-link-form'),
+        generateLink: function(options) {
+            var link_type = options.link_type, // 'download' or 'upload'
+                form = options.form,
                 form_id = form.attr('id'),
-                use_passwd = $('[name="use_passwd"]', form).attr('checked'),
-                set_expiration = $('[name="set_expiration"]', form).attr('checked');
+                use_passwd_checkbox = $('[name="use_passwd"]', form),
+                use_passwd = use_passwd_checkbox.prop('checked');
+            if (link_type == 'download') {
+                var set_expiration_checkbox = $('[name="set_expiration"]', form),
+                    set_expiration = set_expiration_checkbox.prop('checked');
+            }
             var post_data = {};
 
-            console.log($('[name="use_passwd"]', form));
-            console.log(use_passwd);// undefined. TODO: debug
-
             if (use_passwd) {
-                var passwd = $.trim($('[name="password"]', form).val()),
-                    passwd_again = $.trim($('[name="password_again"]', form).val());
+                var passwd_input = $('[name="password"]', form),
+                    passwd_again_input = $('[name="password_again"]', form),
+                    passwd = $.trim(passwd_input.val()),
+                    passwd_again = $.trim(passwd_again_input.val());
                 if (!passwd) {
                     Common.showFormError(form_id, gettext("Please enter password"));
                     return false;
                 }
-                /*
-                if (passwd.length < {{repo_password_min_length}}) { // TODO: min_length
+                if (passwd.length < app.pageOptions.repo_password_min_length) {
                     Common.showFormError(form_id, gettext("Password is too short"));
                     return false;
                 }
-                */
                 if (!passwd_again) {
                     Common.showFormError(form_id, gettext("Please enter the password again"));
                     return false;
@@ -162,8 +164,9 @@ define([
                 post_data["use_passwd"] = 0;
             }
 
-            if (set_expiration) {
-                var expire_days = $.trim($('[name="expire_days"]', form).val());
+            if (set_expiration) { // for upload link, 'set_expiration' is undefined
+                var expire_days_input = $('[name="expire_days"]', form),
+                    expire_days = $.trim(expire_days_input.val());
                 if (!expire_days) {
                     Common.showFormError(form_id, gettext("Please enter days."));
                     return false;
@@ -175,32 +178,68 @@ define([
                 post_data["expire_days"] = expire_days;
             }
 
+            $('.error', form).addClass('hide').html('');
             var gen_btn = $('[type="submit"]', form);
             Common.disableButton(gen_btn);
 
             $.extend(post_data, {
                 'repo_id': this.repo_id,
-                'type': this.is_dir? 'd' : 'f',
                 'p': this.dirent_path
             });
+            if (link_type == 'download') {
+                $.extend(post_data, {
+                    'type': this.is_dir? 'd' : 'f'
+                });
+            }
 
             var _this = this;
             var after_op_success = function(data) {
                 form.addClass('hide');
-                // TODO: restore link options state
+                // restore form state
                 Common.enableButton(gen_btn);
-                _this.$('#download-link').html(data["download_link"]); // TODO: add 'click & select' func
-                _this.download_link = data["download_link"]; // for 'link send'
-                _this.download_link_token = data["token"]; // for 'link delete'
-                _this.$('#download-link-operations').removeClass('hide');
+                if (use_passwd) {
+                    use_passwd_checkbox.prop('checked', false)
+                        .parent().removeClass('checkbox-checked')
+                        // hide password input
+                        .end().closest('.checkbox-label').next().addClass('hide');
+                    passwd_input.val('');
+                    passwd_again_input.val('');
+                }
+                if (set_expiration) {
+                    set_expiration_checkbox.prop('checked', false)
+                        .parent().removeClass('checkbox-checked')
+                        // hide 'day' input
+                        .end().closest('.checkbox-label').next().addClass('hide');
+                    expire_days_input.val('');
+                }
+
+                if (link_type == 'download') {
+                    _this.$('#download-link').html(data["download_link"]); // TODO: add 'click & select' func
+                    _this.download_link = data["download_link"]; // for 'link send'
+                    _this.download_link_token = data["token"]; // for 'link delete'
+                    _this.$('#download-link-operations').removeClass('hide');
+                } else {
+                    _this.$('#upload-link').html(data["upload_link"]);
+                    _this.upload_link = data["upload_link"];
+                    _this.upload_link_token = data["token"];
+                    _this.$('#upload-link-operations').removeClass('hide');
+                }
             };
 
             Common.ajaxPost({
                 'form': form,
-                'post_url': Common.getUrl({name: 'get_share_download_link'}),
+                'post_url': options.post_url,
                 'post_data': post_data,
                 'after_op_success': after_op_success,
                 'form_id': form_id
+            });
+        },
+
+        generateDownloadLink: function() {
+            this.generateLink({
+                link_type: 'download',
+                form: this.$('#generate-download-link-form'),
+                post_url: Common.getUrl({name: 'get_share_download_link'})
             });
             return false;
         },
@@ -286,9 +325,7 @@ define([
             });
         },
 
-        checkUploadLink: function() {
-            // check if upload link exists
-
+        checkUploadLink: function() { // check if upload link exists
             var _this = this;
             var after_op_success = function(data) {
                 if (data['upload_link']) {
@@ -308,63 +345,10 @@ define([
         },
 
         generateUploadLink: function(e) {
-            var form = this.$('#generate-upload-link-form'),
-                form_id = form.attr('id'),
-                use_passwd = $('[name="use_passwd"]', form).attr('checked');
-            var post_data = {};
-
-            if (use_passwd) {
-                var passwd = $.trim($('[name="password"]', form).val()),
-                    passwd_again = $.trim($('[name="password_again"]', form).val());
-                if (!passwd) {
-                    Common.showFormError(form_id, gettext("Please enter password"));
-                    return false;
-                }
-                /*
-                if (passwd.length < {{repo_password_min_length}}) { // TODO: min_length
-                    Common.showFormError(form_id, gettext("Password is too short"));
-                    return false;
-                }
-                */
-                if (!passwd_again) {
-                    Common.showFormError(form_id, gettext("Please enter the password again"));
-                    return false;
-                }
-                if (passwd != passwd_again) {
-                    Common.showFormError(form_id, gettext("Passwords don't match"));
-                    return false;
-                }
-                post_data["use_passwd"] = 1;
-                post_data["passwd"] = passwd;
-            } else {
-                post_data["use_passwd"] = 0;
-            }
-
-            var gen_btn = $('[type="submit"]', form);
-            Common.disableButton(gen_btn);
-
-            $.extend(post_data, {
-                'repo_id': this.repo_id,
-                'p': this.dirent_path
-            });
-
-            var _this = this;
-            var after_op_success = function(data) {
-                form.addClass('hide');
-                // TODO: restore link options state
-                Common.enableButton(gen_btn);
-                _this.$('#upload-link').html(data["upload_link"]); // TODO: add 'click & select' func
-                _this.download_link = data["upload_link"]; // for 'link send'
-                _this.download_link_token = data["token"]; // for 'link delete'
-                _this.$('#upload-link-operations').removeClass('hide');
-            };
-
-            Common.ajaxPost({ // TODO: check 'error'
-                'form': form,
-                'post_url': Common.getUrl({name: 'get_share_upload_link'}), // TODO: check py
-                'post_data': post_data,
-                'after_op_success': after_op_success,
-                'form_id': form_id
+            this.generateLink({
+                link_type: 'upload',
+                form: this.$('#generate-upload-link-form'),
+                post_url: Common.getUrl({name: 'get_share_upload_link'})
             });
             return false;
         },
