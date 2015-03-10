@@ -78,12 +78,17 @@ define([
               case 'get_shared_link': return '';
               case 'get_shared_upload_link': return '';
 
-              case 'delete_share_download_link': return siteRoot + 'share/ajax/link/remove/';
-              case 'delete_share_upload_link': return siteRoot + 'share/ajax/upload_link/remove/';
+              case 'get_share_download_link': return siteRoot + 'share/ajax/get-download-link/';
+              case 'delete_shared_download_link': return siteRoot + 'share/ajax/link/remove/';
+              case 'send_shared_download_link': return siteRoot + 'share/link/send/';
+
+              case 'send_shared_upload_link': return siteRoot + 'share/upload_link/send/';
+              case 'delete_shared_upload_link': return siteRoot + 'share/ajax/upload_link/remove/';
+              case 'get_share_upload_link': return siteRoot + 'share/ajax/get-upload-link/';
+
               case 'get_user_contacts': return siteRoot + 'ajax/contacts/';
               case 'get_user_groups': return siteRoot + 'ajax/groups/';
-              case 'get_share_download_link': return siteRoot + 'share/ajax/get-download-link/';
-              case 'get_share_upload_link': return siteRoot + 'share/ajax/get-upload-link/';
+
               case 'send_share_link': return siteRoot + 'share/ajax/send-share-link/';
               case 'private_share_dir': return siteRoot + 'share/ajax/private-share-dir/';
               case 'private_share_file': return siteRoot + 'share/ajax/private-share-file/';
