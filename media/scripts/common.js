@@ -33,7 +33,8 @@ require.config({
 
         simplemodal: 'lib/jquery.simplemodal.1.4.4.min',
         jstree: 'lib/jstree.1.0',
-        select2: 'lib/select2',
+        select2: 'lib/select2-3.5.2',
+
         underscore: 'lib/underscore',
         backbone: 'lib/backbone',
         text: 'lib/text'

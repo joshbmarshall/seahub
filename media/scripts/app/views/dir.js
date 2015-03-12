@@ -67,17 +67,11 @@ define([
                     }
                 });
 
-                // get contacts & groups for file/dir share
+                // get contacts for 'share'
                 Common.ajaxGet({
                     'get_url': Common.getUrl({name: 'get_user_contacts'}),
                     'after_op_success': function (data) {
                         app.pageOptions.contacts = data["contacts"];
-                    }
-                });
-                Common.ajaxGet({
-                    'get_url': Common.getUrl({name: 'get_user_groups'}),
-                    'after_op_success': function (data) {
-                        app.pageOptions.groups = data["groups"];
                     }
                 });
             },

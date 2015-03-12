@@ -24,16 +24,28 @@ define([
             this.is_dir = options.is_dir;
 
             this.render();
+
             this.$el.modal({
                 appendTo: "#main",
                 focus: false,
                 containerCss: {"padding": 0}
             });
             $('#simplemodal-container').css({'width':'auto', 'height':'auto'});
+
             this.$("#share-tabs").tabs();
 
-            // check if 'download link' exists, decide 'download link' panel's content
-            this.checkDownloadLink();
+            this.downloadLinkPanelInit();
+            if (!this.is_dir && this.is_repo_owner) {
+                this.filePrivateSharePanelInit();
+            }
+            if (this.is_dir) {
+                if (this.user_perm == 'rw') {
+                    this.uploadLinkPanelInit();
+                }
+                if (!this.is_virtual && this.is_repo_owner) {
+                    this.dirPrivateSharePanelInit();
+                }
+            }
         },
 
         render: function () {
@@ -44,39 +56,10 @@ define([
                 is_repo_owner: this.is_repo_owner,
                 is_virtual: this.is_virtual,
                 user_perm: this.user_perm,
-                repo_id: this.repo_id,
-                //TODO
-                cloud_mode: false,
-                org: false
+                repo_id: this.repo_id
             }));
 
             return this;
-        },
-
-        checkDownloadLink: function() {
-            // check if downloadLink exists
-            // decide the content of 'download link' panel
-            var _this = this;
-            var after_op_success = function(data) {
-                _this.$('.loading-tip').hide();
-                if (data['download_link']) {
-                    _this.download_link = data["download_link"]; // for 'link send'
-                    _this.download_link_token = data["token"]; // for 'link delete'
-                    _this.$('#download-link').html(data['download_link']); // TODO:
-                    _this.$('#download-link-operations').removeClass('hide');
-                } else {
-                    _this.$('#generate-download-link-form').removeClass('hide');
-                }
-            };
-            Common.ajaxGet({
-                'get_url': Common.getUrl({name: 'get_share_download_link'}), // TODO: name & py
-                'data': {
-                    'repo_id': this.repo_id,
-                    'p': this.dirent_path,
-                    'type': this.is_dir ? 'd' : 'f'
-                },
-                'after_op_success': after_op_success
-            });
         },
 
         events: {
@@ -92,7 +75,6 @@ define([
             'click #delete-download-link': 'deleteDownloadLink',
 
             // upload link
-            'click #dir-upload-link-share-tab': 'checkUploadLink',
             'submit #generate-upload-link-form': 'generateUploadLink',
             'click #send-upload-link': 'showUploadLinkSendForm',
             'submit #send-upload-link-form': 'sendUploadLink',
@@ -100,11 +82,9 @@ define([
             'click #delete-upload-link': 'deleteUploadLink',
             
             // file private share    
-            'click #file-private-share-tab': 'showFilePrivateSharePanel',
             'submit #file-private-share-form': 'filePrivateShare',
 
             // dir private share    
-            'click #dir-private-share-tab': 'showDirPrivateSharePanel',
             'submit #dir-private-share-form': 'dirPrivateShare'
         },
 
@@ -123,6 +103,31 @@ define([
             $(el).parent().toggleClass('checkbox-checked');
             // for link options such as 'password', 'expire'
             $(el).closest('.checkbox-label').next().toggleClass('hide');
+        },
+
+        downloadLinkPanelInit: function() {
+            var _this = this;
+            var after_op_success = function(data) {
+                _this.$('.loading-tip').hide();
+                if (data['download_link']) {
+                    _this.download_link = data["download_link"]; // for 'link send'
+                    _this.download_link_token = data["token"]; // for 'link delete'
+                    _this.$('#download-link').html(data['download_link']); // TODO:
+                    _this.$('#download-link-operations').removeClass('hide');
+                } else {
+                    _this.$('#generate-download-link-form').removeClass('hide');
+                }
+            };
+            // check if downloadLink exists
+            Common.ajaxGet({
+                'get_url': Common.getUrl({name: 'get_share_download_link'}), // TODO: name & py
+                'data': {
+                    'repo_id': this.repo_id,
+                    'p': this.dirent_path,
+                    'type': this.is_dir ? 'd' : 'f'
+                },
+                'after_op_success': after_op_success
+            });
         },
 
         generateLink: function(options) {
@@ -325,7 +330,7 @@ define([
             });
         },
 
-        checkUploadLink: function() { // check if upload link exists
+        uploadLinkPanelInit: function() {
             var _this = this;
             var after_op_success = function(data) {
                 if (data['upload_link']) {
@@ -337,6 +342,7 @@ define([
                     _this.$('#generate-upload-link-form').removeClass('hide');
                 }
             };
+            // check if upload link exists
             Common.ajaxGet({
                 'get_url': Common.getUrl({name: 'get_share_upload_link'}), // TODO
                 'data': {'repo_id': this.repo_id, 'p': this.dirent_path},
@@ -388,27 +394,25 @@ define([
             });
         },
 
-        showFilePrivateSharePanel: function() {
+        filePrivateSharePanelInit: function() {
             var loading_tip = this.$('.loading-tip');
             var form = this.$('#file-private-share-form');
             loading_tip.show();
 
             var contacts = app.pageOptions.contacts || [];
-            var opts = '', email;
-            for (var i = 0, len = contacts.length; i < len; i++) {
-                email = contacts[i].email;
-                opts += '<option value="' + email + '" data-index="' + i + '">' + email + '</option>';
-            }
-            var format = function(item) {
-                return contacts[$(item.element).data('index')].avatar + '<span class="vam">' + item.text + '</span>';
-            };
-            $('[name="emails"]', form).html(opts).select2({
+            $('[name="emails"]', form).select2({
                 placeholder: gettext("Select contacts or input"),
-                width: 'element',
-                tags: true,
-                tokenSeparators: [',', ' '], // TODO: ??
-                formatResult: format,
-                formatSelection: format,
+                width: '400px',
+                // with 'tags', the user can directly enter, not just select
+                // tags need `<input type="hidden" />`, not `<select>`
+                tags: function () {
+                    var contact_list = [];
+                    for (var i = 0, len = contacts.length; i < len; i++) {
+                        contact_list.push(contacts[i].email);
+                    }
+                    return contact_list;
+                },
+                tokenSeparators: [',', ' '],
                 escapeMarkup: function(m) { return m; }
             });
            
@@ -420,26 +424,23 @@ define([
             var form = this.$('#file-private-share-form'),
                 form_id = form.attr('id');
 
-            var post_emails = "",
-                emails = $('[name="emails"]', form).val();
+            var emails = $('[name="emails"]', form).val();
             if (!emails) {
                 Common.showFormError(form_id, gettext("It is required."));
                 return false;
-            }
-            for (var i = 0, len = emails.length; i < len; i++) {
-                post_emails += emails[i] + ',';
             }
 
             var post_data = {
                 'repo_id': this.repo_id,
                 'path': this.dirent_path,
-                'emails': post_emails
+                'emails': emails
             };
             var post_url = Common.getUrl({name: 'private_share_file'});
-            // TODO: modify seahub/share/views.py 'ajax_private_share_file'
-            // TODO: add feedback in js
             var after_op_success = function (data) {
                 $.modal.close();
+                var msg = gettext("Successfully shared to {placeholder}")
+                    .replace('{placeholder}', data['shared_success'].join(', '));
+                Common.feedback(msg, 'success');
             };
 
             Common.ajaxPost({
@@ -452,26 +453,24 @@ define([
             return false;
         },
 
-        showDirPrivateSharePanel: function() {
+        dirPrivateSharePanelInit: function() {
+            // no 'share to all'
             var loading_tip = this.$('.loading-tip');
             var form = this.$('#dir-private-share-form');
             loading_tip.show();
 
             var contacts = app.pageOptions.contacts || [];
-            var c_opts = '', email;
-            for (var i = 0, len = contacts.length; i < len; i++) {
-                email = contacts[i].email;
-                c_opts += '<option value="' + email + '" data-index="' + i + '">' + email + '</option>';
-            }
-            var c_format = function(item) {
-                return contacts[$(item.element).data('index')].avatar + '<span class="vam">' + item.text + '</span>';
-            };
-            $('[name="emails"]', form).html(c_opts).select2({
+            $('[name="emails"]', form).select2({
                 placeholder: gettext("Select contacts or input"),
-                tags: true,
-                tokenSeparators: [',', ' '], // TODO: ??
-                formatResult: c_format,
-                formatSelection: c_format,
+                width: '400px',
+                tags: function () {
+                    var contact_list = [];
+                    for (var i = 0, len = contacts.length; i < len; i++) {
+                        contact_list.push(contacts[i].email);
+                    }
+                    return contact_list;
+                },
+                tokenSeparators: [',', ' '],
                 escapeMarkup: function(m) { return m; }
             });
            
@@ -480,15 +479,9 @@ define([
             for (var i = 0, len = groups.length; i < len; i++) {
                 g_opts += '<option value="' + groups[i].id + '" data-index="' + i + '">' + groups[i].name + '</option>';
             }
-            var g_format = function(item) {
-                return groups[$(item.element).data('index')].avatar + '<span class="vam">' + item.text + '</span>';
-            };
             $('[name="groups"]', form).html(g_opts).select2({
-                tags: true,
-                tokenSeparators: [',', ' '],
-                placeholder: gettext("Select groups or Input"),
-                formatResult: g_format,
-                formatSelection: g_format,
+                placeholder: gettext("Select groups"),
+                width: '400px',
                 escapeMarkup: function(m) { return m; }
             });
 
@@ -500,13 +493,11 @@ define([
             var form = this.$('#dir-private-share-form'),
                 form_id = form.attr('id');
 
-            var post_groups = "",
-                groups = $('[name="groups"]', form).val(),
-                post_emails = "",
-                emails = $('[name="emails"]', form).val();
+            var emails = $('[name="emails"]', form).val(), // string
+                groups = $('[name="groups"]', form).val(); // null or [group.id]
 
             if (!emails && !groups) {
-                Common.showFormError(form_id, gettext("Please select or input at least one people or group."));
+                Common.showFormError(form_id, gettext("Please select a contact or a group."));
                 return false;
             }
 
@@ -514,24 +505,19 @@ define([
                 'repo_id': this.repo_id,
                 'path': this.dirent_path
             };
-            if (groups) {
-                for (var i = 0, len = groups.length; i < len; i++){
-                    post_groups += groups[i] + ',';
-                }
-                post_data['groups'] = post_groups;
-            }
             if (emails) {
-                for (var i = 0, len = emails.length; i < len; i++){
-                    post_emails += emails[i] + ',';
-                }
-                post_data['emails'] = post_emails;
+                post_data['emails'] = emails;
+            }
+            if (groups) {
+                post_data['groups'] = groups.join(',');
             }
             post_data['perm'] = $('[name="permission"]', form).val();
             var post_url = Common.getUrl({name: 'private_share_dir'});
-            // TODO: check 'private_share_dir' in seahub/share/views.py
-            // add feedback in js
             var after_op_success = function(data) {
                 $.modal.close();
+                var msg = gettext("Successfully shared to {placeholder}")
+                    .replace('{placeholder}', data['shared_success'].join(', '));
+                Common.feedback(msg, 'success');
             };
 
             Common.ajaxPost({

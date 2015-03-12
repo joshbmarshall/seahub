@@ -1413,11 +1413,11 @@ def ajax_private_share_dir(request):
     repo = seafile_api.get_repo(repo_id)
     if not repo:
         result['error'] = _(u'Library does not exist.')
-        return HttpResponse(json.dumps(result), status=500, content_type=content_type)
+        return HttpResponse(json.dumps(result), status=400, content_type=content_type)
 
     if seafile_api.get_dir_id_by_path(repo_id, path) is None:
         result['error'] = _(u'Directory does not exist.')
-        return HttpResponse(json.dumps(result), status=500, content_type=content_type)
+        return HttpResponse(json.dumps(result), status=400, content_type=content_type)
 
     if path != '/':
         # if share a dir, check sub-repo first
@@ -1469,37 +1469,37 @@ def ajax_private_share_dir(request):
         return HttpResponse(json.dumps(result), status=500, content_type=content_type)
 
     # Parsing input values.
-    share_to_all, share_to_groups, share_to_users = False, [], []
+    # no 'share_to_all'
+    share_to_groups, share_to_users = [], []
 
     for email in emails:
-        if email == 'all':
-            share_to_all = True
-        else:
-            email = email.lower()
-            if is_valid_username(email):
-                share_to_users.append(email)
+        email = email.lower()
+        if is_valid_username(email):
+            share_to_users.append(email)
 
     for group_id in groups:
         share_to_groups.append(seaserv.get_group(group_id))
 
-    if share_to_all:
-        share_to_public(request, shared_repo, perm)
-
     if not check_user_share_quota(username, shared_repo, users=share_to_users,
                                   groups=share_to_groups):
-        result['error'] = _(('Failed to share "%s", no enough quota. <a href="http://seafile.com/">Upgrade account.</a>') % repo.name)
-        return HttpResponse(json.dumps(result), status=500, content_type=content_type)
+        result['error'] = _(('Failed to share "%s", no enough quota. <a href="http://seafile.com/">Upgrade account.</a>') % shared_repo.name)
+        return HttpResponse(json.dumps(result), status=400, content_type=content_type)
 
-    for group in share_to_groups:
-        share_to_group(request, shared_repo, group, perm)
+    shared_success = []
 
     for email in share_to_users:
         # Add email to contacts.
         mail_sended.send(sender=None, user=request.user.username, email=email)
         share_to_user(request, shared_repo, email, perm)
+        shared_success.append(email)
 
-    result['success'] = _('Successful')
-    return HttpResponse(json.dumps(result), content_type=content_type)
+    for group in share_to_groups:
+        share_to_group(request, shared_repo, group, perm)
+        shared_success.append(group.group_name)
+
+    if len(shared_success) > 0:
+        return HttpResponse(json.dumps({"shared_success": shared_success}),
+                content_type=content_type)
 
 @login_required_ajax
 @require_POST
@@ -1512,18 +1512,21 @@ def ajax_private_share_file(request):
     username = request.user.username
     emails = emails_string.split(',')
 
+    shared_success = []
+
     for email in [e.strip() for e in emails if e.strip()]:
         if not is_valid_username(email):
             continue
 
         if not is_registered_user(email):
-            messages.error(request, _('Failed to share to "%s", user not found.') % email)
             continue
 
         pfds = PrivateFileDirShare.objects.add_read_only_priv_file_share(username, email, repo_id, path)
+        shared_success.append(email)
 
         # send a signal when sharing file successful
         share_file_to_user_successful.send(sender=None, priv_share_obj=pfds)
 
-    data = json.dumps({"success": _(u'Successful')})
-    return HttpResponse(data, content_type=content_type)
+    if len(shared_success) > 0:
+        data = json.dumps({"shared_success": shared_success})
+        return HttpResponse(data, content_type=content_type)
