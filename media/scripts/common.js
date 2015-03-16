@@ -76,10 +76,10 @@ define([
               case 'unenc_rw_repos': return siteRoot + 'ajax/unenc-rw-repos/';
               case 'get_cp_progress': return siteRoot + 'ajax/cp_progress/';
               case 'cancel_cp': return siteRoot + 'ajax/cancel_cp/';
-              case 'get_shared_link': return '';
-              case 'get_shared_upload_link': return '';
 
-              case 'get_share_download_link': return siteRoot + 'share/ajax/get-download-link/';
+              case 'get_user_contacts': return siteRoot + 'ajax/contacts/';
+
+              case 'get_shared_download_link': return siteRoot + 'share/ajax/get-download-link/';
               case 'delete_shared_download_link': return siteRoot + 'share/ajax/link/remove/';
               case 'send_shared_download_link': return siteRoot + 'share/link/send/';
 
@@ -87,10 +87,6 @@ define([
               case 'delete_shared_upload_link': return siteRoot + 'share/ajax/upload_link/remove/';
               case 'get_share_upload_link': return siteRoot + 'share/ajax/get-upload-link/';
 
-              case 'get_user_contacts': return siteRoot + 'ajax/contacts/';
-              case 'get_user_groups': return siteRoot + 'ajax/groups/';
-
-              case 'send_share_link': return siteRoot + 'share/ajax/send-share-link/';
               case 'private_share_dir': return siteRoot + 'share/ajax/private-share-dir/';
               case 'private_share_file': return siteRoot + 'share/ajax/private-share-file/';
             }
@@ -204,18 +200,19 @@ define([
         },
 
         ajaxPost: function(params) {
+            // usually used for form ajax post in modal popup
             var _this = this,
                 form = params.form,
                 form_id = params.form_id,
                 post_url = params.post_url,
                 post_data = params.post_data,
-                submit_btn = form.children('[type="submit"]'),
-                after_op_error,
-                after_op_success = params.after_op_success;
+                after_op_success = params.after_op_success,
+                after_op_error;
 
+            var submit_btn = form.children('[type="submit"]');
             this.disableButton(submit_btn);
 
-            if (params.hasOwnProperty('after_op_error')) {
+            if (params.after_op_error) {
                 after_op_error = params.after_op_error;
             } else {
                 after_op_error = function(xhr, textStatus, errorThrown) {
@@ -223,11 +220,12 @@ define([
                     if (xhr.responseText) {
                         err = $.parseJSON(xhr.responseText).error;
                     } else {
-                        err = getText("Failed. Please check the network.");
+                        err = gettext("Failed. Please check the network.");
                     }
-                    _this.feedback(err, 'error', _this.ERROR_TIMEOUT);
-                }
-            };
+                    _this.showFormError(form_id, err);
+                    _this.enableButton(submit_btn);
+                };
+            }
 
             $.ajax({
                 url: post_url,
@@ -244,22 +242,15 @@ define([
             var _this = this,
                 get_url = params.get_url,
                 data = params.data,
-                after_op_error,
-                after_op_success = params.after_op_success;
+                after_op_success = params.after_op_success,
+                after_op_error;
 
-            if (params.hasOwnProperty('after_op_error')) {
+            if (params.after_op_error) {
                 after_op_error = params.after_op_error;
             } else {
                 after_op_error = function(xhr, textStatus, errorThrown) {
-                    var err;
-                    if (xhr.responseText) {
-                        err = $.parseJSON(xhr.responseText).error;
-                    } else {
-                        err = getText("Failed. Please check the network.");
-                    }
-                    _this.feedback(err, 'error', _this.ERROR_TIMEOUT);
-                }
-            };
+                };
+            }
             $.ajax({
                 url: get_url,
                 cache: false,
@@ -287,11 +278,6 @@ define([
             }
             return result;
         },
-
-//        validateEmail: function(email) {
-//            var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-//            return re.test(email);
-//        },
 
        fileSizeFormat: function (bytes, precision) {
            var kilobyte = 1024;

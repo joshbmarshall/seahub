@@ -120,7 +120,7 @@ define([
             };
             // check if downloadLink exists
             Common.ajaxGet({
-                'get_url': Common.getUrl({name: 'get_share_download_link'}), // TODO: name & py
+                'get_url': Common.getUrl({name: 'get_shared_download_link'}),
                 'data': {
                     'repo_id': this.repo_id,
                     'p': this.dirent_path,
@@ -244,7 +244,7 @@ define([
             this.generateLink({
                 link_type: 'download',
                 form: this.$('#generate-download-link-form'),
-                post_url: Common.getUrl({name: 'get_share_download_link'})
+                post_url: Common.getUrl({name: 'get_shared_download_link'})
             });
             return false;
         },
@@ -256,7 +256,7 @@ define([
         },
 
         sendLink: function(options) {
-            // options: {form:$obj, other_post_data:{}, post_url:''}  // TODO: better writing
+            // options: {form:$obj, other_post_data:{}, post_url:''}
             var form = options.form,
                 form_id = form.attr('id'),
                 email = $.trim($('[name="email"]', form).val()),
@@ -280,22 +280,35 @@ define([
 
             var after_op_success = function(data) {
                 $.modal.close();
-                Common.feedback(data['msg'], 'success', Common.SUCCESS_TIMOUT);
+                var msg = gettext("Successfully sent to {placeholder}")
+                    .replace('{placeholder}', data['send_success'].join(', '));
+                Common.feedback(msg, 'success');
+                if (data['send_failed'].length > 0) {
+                    msg += '<br />' + gettext("Failed to send to {placeholder}")
+                        .replace('{placeholder}', data['send_failed'].join(', '));
+                    Common.feedback(msg, 'info');
+                }
             };
-            var after_op_error = function() {
+            var after_op_error = function(xhr) {
                 sending_tip.addClass('hide');
                 Common.enableButton(submit_btn);
-                // TODO: improve
-                Common.showFormError(form_id, gettext('Error'));
+                var err;
+                if (xhr.responseText) {
+                    err = $.parseJSON(xhr.responseText).error;
+                } else {
+                    err = gettext("Failed. Please check the network.");
+                }
+                Common.showFormError(form_id, err);
+                Common.enableButton(submit_btn);
             };
 
             Common.ajaxPost({
-               'form': form,
-               'post_url': options.post_url,
-               'post_data': post_data,
-               'after_op_success': after_op_success,
-               'after_op_error': after_op_error,
-               'form_id': form_id
+                'form': form,
+                'post_url': options.post_url,
+                'post_data': post_data,
+                'after_op_success': after_op_success,
+                'after_op_error': after_op_error,
+                'form_id': form_id
             });
         },
 
@@ -441,6 +454,11 @@ define([
                 var msg = gettext("Successfully shared to {placeholder}")
                     .replace('{placeholder}', data['shared_success'].join(', '));
                 Common.feedback(msg, 'success');
+                if (data['shared_failed'].length > 0) {
+                    msg += '<br />' + gettext("Failed to share to {placeholder}")
+                        .replace('{placeholder}', data['shared_failed'].join(', '));
+                    Common.feedback(msg, 'info');
+                }
             };
 
             Common.ajaxPost({
@@ -518,6 +536,11 @@ define([
                 var msg = gettext("Successfully shared to {placeholder}")
                     .replace('{placeholder}', data['shared_success'].join(', '));
                 Common.feedback(msg, 'success');
+                if (data['shared_failed'].length > 0) {
+                    msg += '<br />' + gettext("Failed to share to {placeholder}")
+                        .replace('{placeholder}', data['shared_failed'].join(', '));
+                    Common.feedback(msg, 'info');
+                }
             };
 
             Common.ajaxPost({

@@ -854,7 +854,12 @@ def send_shared_link(request):
         extra_msg = escape(form.cleaned_data['extra_msg'])
 
         to_email_list = string2list(email)
+        send_success, send_failed = [], []
         for to_email in to_email_list:
+            if not is_valid_username(to_email):
+                send_failed.append(to_email)
+                continue
+
             # Add email to contacts.
             mail_sended.send(sender=None, user=request.user.username,
                              email=to_email)
@@ -894,13 +899,16 @@ def send_shared_link(request):
                                     c, from_email, [to_email],
                                     reply_to=reply_to)
 
+                send_success.append(to_email)
             except Exception, e:
-                logger.error(str(e))
-                data = json.dumps({'error':_(u'Internal server error. Send failed.')})
-                return HttpResponse(data, status=500, content_type=content_type)
+                send_failed.append(to_email)
 
-        data = json.dumps({"msg": _(u'Successfully sent.')})
-        return HttpResponse(data, status=200, content_type=content_type)
+        if len(send_success) > 0:
+            data = json.dumps({"send_success": send_success, "send_failed": send_failed})
+            return HttpResponse(data, status=200, content_type=content_type)
+        else:
+            data = json.dumps({"error": _("Internal server error, or please check the email(s) you entered")})
+            return HttpResponse(data, status=400, content_type=content_type)
     else:
         return HttpResponseBadRequest(json.dumps(form.errors),
                                       content_type=content_type)
@@ -1106,10 +1114,7 @@ def get_shared_upload_link(request):
     repo = seaserv.get_repo(repo_id)
     user_perm = check_repo_access_permission(repo.id, request.user)
 
-    if user_perm == 'r':
-        messages.error(request, _(u'Permission denied'))
-        return HttpResponse(status=403, content_type=content_type)
-    elif user_perm == 'rw':
+    if user_perm == 'rw':
         l = UploadLinkShare.objects.filter(repo_id=repo_id).filter(
             username=request.user.username).filter(path=path)
         if len(l) > 0:
@@ -1126,8 +1131,8 @@ def get_shared_upload_link(request):
         data = json.dumps({'token': token, 'shared_upload_link': shared_upload_link})
         return HttpResponse(data, status=200, content_type=content_type)
     else:
-        messages.error(request, _(u'Operation failed'))
-        return HttpResponse(json.dumps(), status=500, content_type=content_type)
+        return HttpResponse(json.dumps({'error': _(u'Permission denied')}),
+                status=403, content_type=content_type)
 
 
 @login_required_ajax
@@ -1153,7 +1158,11 @@ def send_shared_upload_link(request):
         extra_msg = escape(form.cleaned_data['extra_msg'])
 
         to_email_list = string2list(email)
+        send_success, send_failed = [], []
         for to_email in to_email_list:
+            if not is_valid_username(to_email):
+                send_failed.append(to_email)
+                continue
             # Add email to contacts.
             mail_sended.send(sender=None, user=request.user.username,
                              email=to_email)
@@ -1182,13 +1191,17 @@ def send_shared_upload_link(request):
                                 'shared_upload_link_email.html',
                                 c, from_email, [to_email],
                                 reply_to=reply_to)
-            except Exception, e:
-                logger.error(str(e))
-                data = json.dumps({'error':_(u'Internal server error. Send failed.')})
-                return HttpResponse(data, status=500, content_type=content_type)
 
-        data = json.dumps({"msg": _(u'Successfully sent.')})
-        return HttpResponse(data, status=200, content_type=content_type)
+                send_success.append(to_email)
+            except Exception, e:
+                send_failed.append(to_email)
+
+        if len(send_success) > 0:
+            data = json.dumps({"send_success": send_success, "send_failed": send_failed})
+            return HttpResponse(data, status=200, content_type=content_type)
+        else:
+            data = json.dumps({"error": _("Internal server error, or please check the email(s) you entered")})
+            return HttpResponse(data, status=400, content_type=content_type)
     else:
         return HttpResponseBadRequest(json.dumps(form.errors),
                                       content_type=content_type)
@@ -1217,6 +1230,7 @@ def ajax_get_upload_link(request):
             data = {}
 
         return HttpResponse(json.dumps(data), content_type=content_type)
+
     elif request.method == 'POST':
         repo_id = request.POST.get('repo_id', '')
         path = request.POST.get('p', '')
@@ -1234,10 +1248,7 @@ def ajax_get_upload_link(request):
         repo = seaserv.get_repo(repo_id)
         user_perm = check_repo_access_permission(repo.id, request.user)
 
-        if user_perm == 'r':
-            messages.error(request, _(u'Permission denied'))
-            return HttpResponse(status=403, content_type=content_type)
-        elif user_perm == 'rw':
+        if user_perm == 'rw':
             l = UploadLinkShare.objects.filter(repo_id=repo_id).filter(
                 username=request.user.username).filter(path=path)
             if len(l) > 0:
@@ -1254,8 +1265,8 @@ def ajax_get_upload_link(request):
             data = json.dumps({'token': token, 'upload_link': shared_upload_link})
             return HttpResponse(data, content_type=content_type)
         else:
-            messages.error(request, _(u'Operation failed'))
-            return HttpResponse(json.dumps(), status=500, content_type=content_type)
+            return HttpResponse(json.dumps({'error': _(u'Permission denied')}),
+                status=403, content_type=content_type)
 
 @login_required_ajax
 def ajax_get_download_link(request):
@@ -1285,6 +1296,7 @@ def ajax_get_download_link(request):
             data = {}
 
         return HttpResponse(json.dumps(data), content_type=content_type)
+
     elif request.method == 'POST':
         repo_id = request.POST.get('repo_id', '')
         share_type = request.POST.get('type', 'f')  # `f` or `d`
@@ -1327,77 +1339,6 @@ def ajax_get_download_link(request):
         token = fs.token
         shared_link = gen_shared_link(token, fs.s_type)
         data = json.dumps({'token': token, 'download_link': shared_link})
-        return HttpResponse(data, content_type=content_type)
-
-@login_required_ajax
-@require_POST
-def ajax_send_share_link(request):
-    """
-    Handle ajax request to send shared link.
-    """
-    content_type = 'application/json; charset=utf-8'
-
-    if not IS_EMAIL_CONFIGURED:
-        data = json.dumps({'error':_(u'Sending shared link failed. Email service is not properly configured, please contact administrator.')})
-        return HttpResponse(data, status=500, content_type=content_type)
-
-    from seahub.settings import SITE_NAME
-
-    email = request.POST.get('email')
-    shared_link = request.POST.get('shared_link')
-    shared_name = request.POST.get('shared_name')
-    shared_type = request.POST.get('shared_type')
-    extra_msg = escape(request.POST.get('extra_msg'))
-
-    # TODO check dir/file download or upload link
-
-    to_email_list = string2list(email)
-    for to_email in to_email_list:
-        # Add email to contacts.
-        mail_sended.send(sender=None, user=request.user.username,
-                         email=to_email)
-
-        c = {
-            'email': request.user.username,
-            'to_email': to_email,
-            'file_shared_link': shared_link,
-            'file_shared_name': shared_name,
-        }
-
-        if extra_msg:
-            c['extra_msg'] = extra_msg
-
-        if REPLACE_FROM_EMAIL:
-            from_email = request.user.username
-        else:
-            from_email = None  # use default from email
-
-        if ADD_REPLY_TO_HEADER:
-            reply_to = request.user.username
-        else:
-            reply_to = None
-
-        try:
-            if shared_type == 'f':
-                c['file_shared_type'] = "file"
-                send_html_email(_(u'A file is shared to you on %s') % SITE_NAME,
-                                'shared_link_email.html',
-                                c, from_email, [to_email],
-                                reply_to=reply_to
-                                )
-            else:
-                c['file_shared_type'] = "directory"
-                send_html_email(_(u'A directory is shared to you on %s') % SITE_NAME,
-                                'shared_link_email.html',
-                                c, from_email, [to_email],
-                                reply_to=reply_to)
-
-        except Exception, e:
-            logger.error(str(e))
-            data = json.dumps({'error':_(u'Internal server error. Send failed.')})
-            return HttpResponse(data, status=500, content_type=content_type)
-
-        data = json.dumps({"success": _(u'Successfully sent.')})
         return HttpResponse(data, content_type=content_type)
 
 @login_required_ajax
@@ -1470,12 +1411,14 @@ def ajax_private_share_dir(request):
 
     # Parsing input values.
     # no 'share_to_all'
-    share_to_groups, share_to_users = [], []
+    share_to_groups, share_to_users, shared_success, shared_failed = [], [], [], []
 
     for email in emails:
         email = email.lower()
         if is_valid_username(email):
             share_to_users.append(email)
+        else:
+            shared_failed.append(email)
 
     for group_id in groups:
         share_to_groups.append(seaserv.get_group(group_id))
@@ -1484,8 +1427,6 @@ def ajax_private_share_dir(request):
                                   groups=share_to_groups):
         result['error'] = _(('Failed to share "%s", no enough quota. <a href="http://seafile.com/">Upgrade account.</a>') % shared_repo.name)
         return HttpResponse(json.dumps(result), status=400, content_type=content_type)
-
-    shared_success = []
 
     for email in share_to_users:
         # Add email to contacts.
@@ -1498,8 +1439,14 @@ def ajax_private_share_dir(request):
         shared_success.append(group.group_name)
 
     if len(shared_success) > 0:
-        return HttpResponse(json.dumps({"shared_success": shared_success}),
-                content_type=content_type)
+        return HttpResponse(json.dumps({
+            "shared_success": shared_success,
+            "shared_failed": shared_failed
+            }), content_type=content_type)
+    else:
+        # for case: only share to users and the emails are not valid
+        data = json.dumps({"error": _("Please check the email(s) you entered")})
+        return HttpResponse(data, status=400, content_type=content_type)
 
 @login_required_ajax
 @require_POST
@@ -1512,13 +1459,15 @@ def ajax_private_share_file(request):
     username = request.user.username
     emails = emails_string.split(',')
 
-    shared_success = []
+    shared_success, shared_failed = [], []
 
     for email in [e.strip() for e in emails if e.strip()]:
         if not is_valid_username(email):
+            shared_failed.append(email)
             continue
 
         if not is_registered_user(email):
+            shared_failed.append(email)
             continue
 
         pfds = PrivateFileDirShare.objects.add_read_only_priv_file_share(username, email, repo_id, path)
@@ -1528,5 +1477,8 @@ def ajax_private_share_file(request):
         share_file_to_user_successful.send(sender=None, priv_share_obj=pfds)
 
     if len(shared_success) > 0:
-        data = json.dumps({"shared_success": shared_success})
+        data = json.dumps({"shared_success": shared_success, "shared_failed": shared_failed})
         return HttpResponse(data, content_type=content_type)
+    else:
+        data = json.dumps({"error": _("Please check the email(s) you entered")})
+        return HttpResponse(data, status=400, content_type=content_type)
