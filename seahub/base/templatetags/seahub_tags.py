@@ -6,7 +6,7 @@ import time
 
 from django import template
 from django.core.cache import cache
-from django.utils.safestring import mark_safe
+from django.utils.safestring import mark_safe, SafeData
 from django.utils import translation
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
@@ -105,6 +105,8 @@ COMMIT_MSG_TRANSLATION_MAP = {
 @register.filter(name='translate_commit_desc')
 def translate_commit_desc(value):
     """Translate commit description."""
+    is_safe_data = isinstance(value, SafeData)
+
     if value.startswith('Reverted repo'):
         # Change 'repo' to 'library' in revert commit msg, since 'repo' is
         # only used inside of seafile system.
@@ -162,6 +164,8 @@ def translate_commit_desc(value):
                 ret = op_trans + u' "' + file_name + u'".'
             ret_list.append(ret)
 
+        if is_safe_data:
+            return mark_safe('\n'.join(ret_list))
         return '\n'.join(ret_list)
 
 @register.filter(name='translate_seahub_time')
