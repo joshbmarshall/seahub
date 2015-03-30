@@ -1,9 +1,9 @@
 {% load i18n %}
 <td>
   <% if (encrypted) { %>
-  <img src="{{ MEDIA_URL }}img/sync-folder-encrypt-20.png" title="{% trans 'Read-Write' %}" alt="directory icon" />
+  <img src="{{ MEDIA_URL }}img/sync-folder-encrypt-20.png" title="{% trans 'Read-Write' %}" alt="{% trans "directory icon" %}" />
   <% } else { %>
-  <img src="{{ MEDIA_URL }}img/sync-folder-20.png" title="Read-Write" alt="directory icon" />
+  <img src="{{ MEDIA_URL }}img/sync-folder-20.png" title="{% trans "Read-Write" %}" alt="directory icon" />
   <% } %>
 </td>
 <td><a href="#my-libs/lib/<%= id %>"><%- name %></a></td>

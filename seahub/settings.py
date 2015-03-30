@@ -178,6 +178,8 @@ INSTALLED_APPS = (
 
     'registration',
     'captcha',
+    'statici18n',
+    'staticunderscorei18n',
 
     'seahub.api2',
     'seahub.avatar',
@@ -194,6 +196,11 @@ INSTALLED_APPS = (
     'seahub.thumbnail',
 )
 
+STATIC_UNDERSCORE_TEMPLATES = {
+    'repo_list_item': 'js/repo.html',
+    'create_repo': 'js/create-repo.html',
+}
+STATIC_UNDERSCORE_I18N_FILENAME_FUNCTION = 'staticunderscorei18n.utils.default_filename'
 
 AUTHENTICATION_BACKENDS = (
     'seahub.base.accounts.AuthBackend',

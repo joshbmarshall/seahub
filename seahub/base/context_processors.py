@@ -42,6 +42,12 @@ def base(request):
         org = request.user.org
     except AttributeError:
         org = None
+
+    try:
+        cloud_mode = request.cloud_mode
+    except AttributeError:
+        cloud_mode = False
+
     try:
         base_template = request.base_template
     except AttributeError:
@@ -66,7 +72,7 @@ def base(request):
         'logo_width': LOGO_WIDTH,
         'logo_height': LOGO_HEIGHT,
         'seacloud_mode': SEACLOUD_MODE,
-        'cloud_mode': request.cloud_mode,
+        'cloud_mode': cloud_mode,
         'org': org,
         'base_template': base_template,
         'site_name': SITE_NAME,

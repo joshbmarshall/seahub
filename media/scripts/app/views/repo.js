@@ -4,14 +4,13 @@ define([
     'backbone',
     'common',
     'app/views/share',
-    'text!' + app.config._tmplRoot + 'repo.html'
-], function($, _, Backbone, Common, ShareView, reposTemplate) {
+], function($, _, Backbone, Common, ShareView) {
     'use strict';
 
     var RepoView = Backbone.View.extend({
         tagName: 'tr',
 
-        template: _.template(reposTemplate),
+        template: _.template(repo_list_item),
 
         events: {
             'mouseenter': 'showAction',

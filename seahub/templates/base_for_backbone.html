@@ -157,7 +157,12 @@ var app = {
     }
 };
 </script>
-<script type="text/javascript" src="{% url 'seahub.views.i18n.cached_javascript_catalog' %}"></script>
+
+
+<script src="{{ MEDIA_URL }}jsi18n/{{ LANGUAGE_CODE }}/djangojs.js"></script>
+<script src="{{ MEDIA_URL }}jsunderscorei18n/{{ LANGUAGE_CODE }}/jsunderscore_tmpl.js"></script>
+
+
 
 {% block extra_script %}{% endblock %}
 
