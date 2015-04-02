@@ -19,6 +19,16 @@ require.config({
             ],
             exports: 'Backbone'
         },
+        jstree: {
+            deps: [
+                'jquery'
+            ]
+        },
+        select2: {
+            deps: [
+                'jquery'
+            ]
+        }
     },
     paths: {
         'jquery': 'lib/jquery',
@@ -44,6 +54,10 @@ require.config({
     }
 });
 
+// load foundational libs
+require( [ "./infrastructure" ], function () {} );
+
+// Common functions for app
 define([
     'jquery',
     'underscore',

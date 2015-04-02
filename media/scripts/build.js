@@ -5,15 +5,33 @@
     findNestedDependencies: true, // find runtime dependencies
     removeCombined: true,
     // fileExclusionRegExp: /^dist$/,
+    // generateSourceMaps: true,
     dir: "dist",
 
     modules: [
         {
-            name: "myhome"
+            name: "myhome",
+            exclude: [
+                "infrastructure"
+            ]
         },
 
         {
-            name: "group"
+            name: "group",
+            exclude: [
+                "infrastructure"
+            ]
+        },
+
+        {
+            name: "organization",
+            exclude: [
+                "infrastructure"
+            ]
+        },
+        
+        {
+            name: "infrastructure"
         }
     ]
 })
