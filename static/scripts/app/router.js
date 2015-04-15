@@ -40,6 +40,12 @@ define([
             this.currentView = this.myHomeView;
 
             this.groupNavView = new GroupNavView();
+
+            $('.ui.dropdown')
+              .dropdown({
+                on: 'hover'
+              })
+            ;
         },
 
         switchCurrentView: function(newView) {

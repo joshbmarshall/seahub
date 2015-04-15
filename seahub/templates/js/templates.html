@@ -458,24 +458,24 @@
         <h3 class="fleft">{% trans "Personal" %}</h3>
         <img id="myhome-enable-mods" class="fright" title="{% trans "Enable Modules" %}" src="{{MEDIA_URL}}img/setting.png" alt="" />
     </div>
-    <ul class="side-tabnav-tabs">
-        <li class="tab tab-cur"><a href="{{ SITE_ROOT }}#my-libs/" class="lib">{% trans "Libraries" %}</a></li>
-        <li class="tab"><a href="{{ SITE_ROOT }}starred/" class="star">{% trans "Starred" %}</a></li>
+    <div class="ui vertical menu">
+        <a href="{{ SITE_ROOT }}#my-libs/" class="lib item ">{% trans "Libraries" %}</a>
+        <a href="{{ SITE_ROOT }}starred/" class="star item">{% trans "Starred" %}</a>
 
         <% if (events_enabled) { %>
-        <li class="tab"><a href="{{ SITE_ROOT }}activities/" class="activity">{% trans "Activities" %}</a></li>
+        <a href="{{ SITE_ROOT }}activities/" class="activity item">{% trans "Activities" %}</a>
         <% } %>
 
         <% for (var i = 0, len = mods_enabled.length; i < len; i++) { %>
             <% if (mods_enabled[i] == 'personal wiki') { %>
-        <li class="tab"><a href="{{ SITE_ROOT }}home/wiki/" class="wiki">{% trans "Personal Wiki" %}</a></li>
+        <a href="{{ SITE_ROOT }}home/wiki/" class="wiki item">{% trans "Personal Wiki" %}</a>
             <% } %>
         <% } %>
 
-        <li class="tab"><a href="{{ SITE_ROOT }}message/list/" class="msgs">{% trans "Messages" %}</a></li>
-        <li class="tab"><a href="{{ SITE_ROOT }}devices/" class="clients">{% trans "Devices" %}</a></li>
-        <li class="tab"><a href="{{ SITE_ROOT }}contacts/" class="contacts">{% trans "Contacts" %}</a></li>
-    </ul>
+        <a href="{{ SITE_ROOT }}message/list/" class="msgs item">{% trans "Messages" %}</a>
+        <a href="{{ SITE_ROOT }}devices/" class="clients item">{% trans "Devices" %}</a>
+        <a href="{{ SITE_ROOT }}contacts/" class="contacts item">{% trans "Contacts" %}</a>
+    </div>
 
     <h3 class="hd">{% trans "Share Admin" %}</h3>
     <ul class="side-tabnav-tabs">

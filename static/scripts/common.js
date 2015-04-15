@@ -35,6 +35,7 @@ require.config({
         'jquery.fileupload-ui': 'lib/jquery.fileupload.ui.9.6.0',
 
         'jquery.magnific-popup': 'lib/jquery.magnific-popup',
+        'semantic': '../semantic-ui/dist/semantic',
 
         simplemodal: 'lib/jquery.simplemodal.1.4.4.min',
         jstree: 'lib/jstree.1.0',
@@ -50,6 +51,7 @@ define([
     'jquery',
     'underscore',
     'text',                     // Workaround for r.js, otherwise text.js will not be included
+    'semantic',
 ], function($, _, text) {
     return {
         INFO_TIMEOUT: 10000,     // 10 secs for info msg
