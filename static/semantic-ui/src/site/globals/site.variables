@@ -1,0 +1,11 @@
+/*******************************
+     User Global Variables
+*******************************/
+
+@headerFont        : Arial, Helvetica, sans-serif;
+@pageFont          : Arial, Helvetica, sans-serif;
+@importGoogleFonts : false;
+
+@fontSize : 13px;
+@pageBackground : @white;
+@linkColor: #eb8205;

@@ -1,6 +1,22 @@
 /* */
-.hide {
-    display:none;
+.hide { display:none; }
+.vh { visibility:hidden; }
+.fleft { float:left }
+.fright { float:right }
+.ovhd { overflow:hidden; }
+.w100 { width: 100%; }
+button,
+input[type=submit],
+input[type=button],
+input.submit,
+.fileinput-button,
+select {
+    padding:5px 6px;
+    background:-webkit-linear-gradient(top, #fafafb, #eeeeee);
+    background:-moz-linear-gradient(top, #fafafb, #eeeeee);
+    background:linear-gradient(top, #fafafb, #eeeeee);
+    border: 1px solid #c5c5c5;
+    border-radius: 2px;
 }
 #main {
     width:950px;
@@ -50,6 +66,46 @@
 .ui.footer.segment {
     padding: 3em 1em;
 }
+/* menus */
+i.imageicon {
+    background:transparent url('../img/bg.png') no-repeat scroll 0 0;
+    height: 24px;
+    display: inline-block;
+    vertical-align: middle;
+}
+i.lib.imageicon {
+    background-position: 11px -24px;
+}
+i.star.imageicon {
+    background-position: 9px -48px;
+}
+.ui.menu .hide {
+    display: none;
+}
+.ui.secondary.pointing.menu {
+    border-bottom: none;
+}
+.ui.vertical.menu .item > i.imageicon {
+    float: none;
+    width: 3em;
+    opacity: 1;
+}
+.ui.vertical.menu {
+    background: none;
+    box-shadow: none;
+}
+.ui.vertical.menu .item:before {
+    width: 0;
+}
+.ui.secondary.pointing.menu > .item.active {
+    border-color: #ee8204;
+}
+/* table */
+#my-own-repos.loading,
+#my-sub-repos.loading,
+#repos-shared-to-me.loading {
+    min-height: 100px;
+}
 /* lib view */
 .repo-file-list .dirent-name {
     width:220px;
@@ -77,6 +133,91 @@
     color:#fff;
     text-decoration:none;
     background:#feaa7c;
+}
+/* dir view */
+#dir-view .repo-op,
+.wiki-top {
+    padding:9px 10px;
+    background:#f2f2f2;
+    margin-bottom:.5em;
+    border-radius:2px;
+}
+#dir-view .repo-op {
+    padding: 9px 10px;
+}
+#dir-view .repo-op .op-btn {
+    padding:5px 14px;
+}
+.op-btn {
+    height:29px;
+    background:#fff;
+    line-height:17px;
+    vertical-align:middle;
+}
+/* file upload */
+.repo-op .upload-file-btn {
+    display: inline-block;
+    height: auto;
+    padding: 5px 6px;
+    border: 1px solid #c5c5c5;
+    border-radius: 2px;
+    position:relative;
+    overflow:hidden;
+}
+#upload-menu {
+    position:absolute;
+    left:0;
+    top:29px;
+    border:1px solid #c5c5c5;
+    border-radius:2px;
+    box-shadow: 0 0 2px #c5c5c5;
+    background:#fff;
+}
+#upload-menu .item {
+    position:relative;
+    text-align:left;
+    padding:0 10px;
+    height:27px;
+    line-height:27px;
+    overflow:hidden; /* for 'hover', as long 'input' in it. */
+}
+#upload-file input,
+#upload-menu input {
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin: 0;
+    height:27px;
+    opacity: 0;
+    filter: alpha(opacity=0);
+    cursor: pointer;
+}
+/* multi repo operation */
+.repo-setting-icon,
+.repo-trash-icon,
+.repo-history-icon {
+    width:30px;
+    height:30px;
+    background-image: url('../img/multi-repo-op.png');
+    background-repeat: no-repeat;
+    display:inline-block;
+    margin-right:10px;
+    outline:none; /* removing the dotted outline for FireFox */
+}
+.repo-setting-icon:hover {
+    background-position: 0 -30px;
+}
+.repo-trash-icon {
+    background-position: 0 -60px;
+}
+.repo-trash-icon:hover {
+    background-position: 0 -90px;
+}
+.repo-history-icon {
+    background-position: 0 -120px;
+}
+.repo-history-icon:hover {
+    background-position: 0 -150px;
 }
 /* custom select2 */
 .select2-container-multi .select2-choices {

@@ -19,6 +19,12 @@ require.config({
             ],
             exports: 'Backbone'
         },
+        semantic: {
+            deps: [
+                'jquery'
+            ],
+            exports: 'semantic'
+        }
     },
     paths: {
         'jquery': 'lib/jquery',
