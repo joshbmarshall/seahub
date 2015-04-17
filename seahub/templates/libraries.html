@@ -54,16 +54,16 @@
             <a href="#shared-libs/" class="item" id="shared-lib-tab">{% trans "Shared" %}</a>
 
             <div class="right menu">
-                <button id="repo-create" class="item"><img src="{{ MEDIA_URL }}img/add.png" alt="" class="add vam" /><span class="vam">{% trans "New Library" %}</span></button>
+                <button id="repo-create" class="ui basic button">{% trans "New Library" %}</span></button>
                 {% if sub_lib_enabled %}
-                <button id="sub-lib-create" class="item hide" title="{% trans "New Sub-library" %}"><img src="{{ MEDIA_URL }}img/add.png" alt="" class="add vam" /><span class="vam">{% trans "New Sub-library" %}</span></button>
+                <button id="sub-lib-create" class="ui basic button hide" title="{% trans "New Sub-library" %}">{% trans "New Sub-library" %}</span></button>
                 {% endif %}
             </div>
         </div>
     </div>
 
-    <div id="my-own-repos">
-        <table class="ui table very basic compact hide">
+    <div id="my-own-repos" class="ui basic fitted segment">
+        <table class="ui very basic table hide">
             <thead>
                 <tr>
                     <th width="4%"><!--icon--></th>
@@ -118,8 +118,6 @@
             <h2 class="alc">{% trans "No library is shared to you" %}</h2>
         </div>
     </div>
-
-    <img class="loading-tip" src="{{MEDIA_URL}}img/loading-icon.gif" alt="{% trans 'Loading...' %}" />
 </div>
 
 {% if need_guide %}

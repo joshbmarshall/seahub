@@ -1,7 +1,10 @@
 /* */
-.hide {
-    display:none;
-}
+.hide { display:none; }
+.vh { visibility:hidden; }
+.fleft { float:left }
+.fright { float:right }
+.ovhd { overflow:hidden; }
+.w100 { width: 100%; }
 #main {
     width:950px;
 }
@@ -49,6 +52,43 @@
 }
 .ui.footer.segment {
     padding: 3em 1em;
+}
+/* menus */
+i.imageicon {
+    background:transparent url('../img/bg.png') no-repeat scroll 0 0;
+    height: 24px;
+    display: inline-block;
+    vertical-align: middle;
+}
+i.lib.imageicon {
+    background-position: 11px -24px;
+}
+i.star.imageicon {
+    background-position: 9px -48px;
+}
+.ui.menu .hide {
+    display: none;
+}
+.ui.secondary.pointing.menu {
+    border-bottom: none;
+}
+.ui.vertical.menu .item > i.imageicon {
+    float: none;
+    width: 3em;
+    opacity: 1;
+}
+.ui.vertical.menu {
+    background: none;
+    box-shadow: none;
+}
+.ui.vertical.menu .item:before {
+    width: 0;
+}
+/* table */
+#my-own-repos.loading,
+#my-sub-repos.loading,
+#repos-shared-to-me.loading {
+    min-height: 100px;
 }
 /* lib view */
 .repo-file-list .dirent-name {
