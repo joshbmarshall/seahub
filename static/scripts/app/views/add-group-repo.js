@@ -9,6 +9,11 @@ define([
     'use strict';
 
     var AddGroupRepoView = AddRepoView.extend({
+        initialize: function(repos) {
+            console.log('init create repo popup in group');
+            AddRepoView.prototype.initialize.apply(this, arguments);
+        },
+        
         templateData: function() {
             return {
                 showSharePerm: true

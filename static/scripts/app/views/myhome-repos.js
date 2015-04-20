@@ -80,6 +80,7 @@ define([
         },
 
         createRepo: function() {
+            console.log('click "New library" button in myhome');
             var addRepoView = new AddRepoView(this.repos);
             addRepoView.render();
         },

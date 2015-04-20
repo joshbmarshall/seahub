@@ -14,7 +14,6 @@ define([
         el: '#main',
 
         initialize: function(options) {
-
             this.$sideNav = $('#org-side-nav');
             this.$reposDiv = $('#organization-repos');
             this.$table = $('#organization-repos table');
@@ -36,6 +35,7 @@ define([
         },
 
         createRepo: function() {
+            console.log('click "New library" button in org');
             new AddPubRepoView(this.repos).render();
         },
 

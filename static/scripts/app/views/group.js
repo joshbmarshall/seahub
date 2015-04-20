@@ -93,6 +93,7 @@ define([
         },
 
         createRepo: function() {
+            console.log('click "New library" button in group');
             var addGroupRepoView = new AddGroupRepoView(this.repos);
             addGroupRepoView.render();
         },

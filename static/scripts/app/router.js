@@ -39,9 +39,6 @@ define([
             this.dirView = new DirView();
 
             this.myHomeView = new MyHomeView({dirView: this.dirView});
-            this.groupView = new GroupView({dirView: this.dirView});
-            this.orgView = new OrgView({dirView: this.dirView});
-
             this.currentView = this.myHomeView;
 
             if (app.pageOptions.top_nav_groups.length > 0) {
@@ -51,7 +48,10 @@ define([
 
         switchCurrentView: function(newView) {
             if (this.currentView != newView) {
+                this.currentView.undelegateEvents();
                 this.currentView.hide();
+
+                newView.delegateEvents();
                 this.currentView = newView;
             }
         },
@@ -102,6 +102,8 @@ define([
         },
 
         showGroupRepos: function(group_id) {
+            this.groupView = this.groupView || new GroupView({dirView: this.dirView});
+
             this.switchCurrentView(this.groupView);
             this.groupView.showRepoList(group_id);
         },
@@ -112,11 +114,14 @@ define([
             } else {
                 path = '/';
             }
+            this.groupView = this.groupView || new GroupView({dirView: this.dirView});
+
             this.switchCurrentView(this.groupView);
             this.groupView.showDir(group_id, repo_id, path);
         },
 
         showOrgRepos: function() {
+            this.orgView = this.orgView || new OrgView({dirView: this.dirView});
             this.switchCurrentView(this.orgView);
             this.orgView.showRepoList();
         },
@@ -127,6 +132,8 @@ define([
             } else {
                 path = '/';
             }
+            this.orgView = this.orgView || new OrgView({dirView: this.dirView});
+
             this.switchCurrentView(this.orgView);
             this.orgView.showDir(repo_id, path);
         },
